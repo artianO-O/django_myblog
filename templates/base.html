@@ -1,0 +1,29 @@
+{#载入静态文件#}
+{% load staticfiles %}
+{#模板中要加上 {% load staticfiles %} 之后，才可使用 {% static 'path' %} 引用静态文件。#}
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    {#预留网站标题的位置#}
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'md_css/monokai.css' %}">
+</head>
+<body>
+{#引入导航栏#}
+{% include 'header.html' %}
+{#预留具体页面的位置#}
+{% block content %}{% endblock %}
+{#在html中使用python语法引入文件#}
+{% include 'footer.html' %}
+<!-- bootstrap.js 依赖 jquery.js 和popper.js，因此在这里引入 -->
+<script src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
+<script src="{% static 'popper/popper.js' %}"></script>
+<!-- 引入bootstrap的js文件 -->
+<script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+ <!-- 引入layer.js -->
+<script src="{% static 'layer/layer.js' %}"></script>
+</body>
+</html>
