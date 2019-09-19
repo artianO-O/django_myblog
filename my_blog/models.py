@@ -1,6 +1,7 @@
 from django.db import  models
 from django.contrib.auth.models import  User
 from django.utils import  timezone
+from django.urls import reverse
 
 #博客文章数据模型
 class ArticlePost(models.Model):
@@ -9,6 +10,11 @@ class ArticlePost(models.Model):
     body = models.TextField()
     created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(auto_now=True)
+    total_views = models.PositiveIntegerField(default=0)
+
+    # 获取文章地址
+    def get_absolute_url(self):
+        return reverse('my_blog:article_detail', args=[self.id])
 
     # 内部类 class Meta 用于给 model 定义元数据
     class Meta:

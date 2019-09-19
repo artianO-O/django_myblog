@@ -9,6 +9,10 @@ from .forms import ArticlePostForm
 # 引入User模型
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+# 引入分页模块
+from django.core.paginator import Paginator
+from django.db.models import Q
+from comment.models import Comment
 
 def getInfo(request):
     return HttpResponse("ok");
@@ -68,6 +72,9 @@ def article_update(request,id):
 
     # 获取需要修改的具体文章对象
     article = ArticlePost.objects.get(id=id)
+    # 过滤非作者的用户
+    if request.user != article.author:
+        return HttpResponse("抱歉，你无权修改这篇文章。")
     # 判断用户是否为 POST 提交表单数据
     if request.method == "POST":
         # 将提交的数据赋值到表单实例中
@@ -95,25 +102,58 @@ def article_update(request,id):
 
 #templates的路径在全局中有配置，所以不需要我们导入
 def article_list(request):
-    #取出所有博客文章
-    articles = ArticlePost.objects.all()
-    #需要传递给模板（templates）的对象,JSon格式
-    context = {'articles':articles}
-    return render(request,'articles/list.html',context)
+    search = request.GET.get('search')
+    order = request.GET.get('order')
+    # 用户搜索逻辑
+    if search:
+        if order == 'total_views':
+            # 用 Q对象 进行联合搜索
+            article_list = ArticlePost.objects.filter(
+                Q(title__icontains=search) |
+                Q(body__icontains=search)
+            ).order_by('-total_views')
+        else:
+            article_list = ArticlePost.objects.filter(
+                Q(title__icontains=search) |
+                Q(body__icontains=search)
+            )
+    else:
+        # 将 search 参数重置为空
+        search = ''
+        if order == 'total_views':
+            article_list = ArticlePost.objects.all().order_by('-total_views')
+        else:
+            article_list = ArticlePost.objects.all()
+
+    paginator = Paginator(article_list, 3)
+    page = request.GET.get('page')
+    articles = paginator.get_page(page)
+    # 增加 search 到 context
+    context = {'articles': articles, 'order': order, 'search': search}
+    return render(request, 'articles/list.html', context)
 
 def article_detail(request,id):
     #取出相应的文章
     article = ArticlePost.objects.get(id=id)
+    # 浏览量 +1
+    article.total_views += 1
+    article.save(update_fields=['total_views'])
 
-    article.body = markdown.markdown(article.body,
-           extensions=[
-               #包含 缩写，表格等常用扩展
-               'markdown.extensions.extra',
-               #语法高亮扩展
-               'markdown.extensions.codehilite',
-           ])
-    #需要传递给模板的对象
-    context = {'article':article}
-    #载入模板，并返回context对象
-    return render(request,'articles/detail.html',context)
+    # 取出文章评论
+    comments = Comment.objects.filter(article=id)
+
+    # 修改 Markdown 语法渲染
+    md = markdown.Markdown(
+        extensions=[
+            'markdown.extensions.extra',
+            'markdown.extensions.codehilite',
+            'markdown.extensions.toc',
+        ]
+    )
+    article.body = md.convert(article.body)
+
+    # 新增了md.toc对象
+    context = {'article': article, 'toc': md.toc,'comments': comments}
+
+    return render(request, 'articles/detail.html', context)
 
