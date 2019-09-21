@@ -24,7 +24,7 @@ urlpatterns = [
     path('my_blog/',include('my_blog.urls',namespace='my_blog')),
     # 用户管理
     path('userprofile/', include('userprofile.urls', namespace='userprofile')),
-    path('password-reset/', include('password_reset.urls')),
+    # path('password-reset/', include('password_reset.urls')),
     # 评论
     path('comment/', include('comment.urls', namespace='comment')),
 ]

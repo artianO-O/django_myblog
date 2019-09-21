@@ -74,7 +74,6 @@ INSTALLED_APPS = [
     'my_blog.apps.MyBlogConfig',
     'comment',
     'userprofile',
-    'password_reset',
     'corsheaders',
 ]
 
